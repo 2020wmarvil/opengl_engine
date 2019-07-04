@@ -38,7 +38,9 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 static unsigned int default_VAO, alternate_VAO;
 
 int main() {
+	// testing the build system, should just print "100" to the console
 	std::cout << test() << std::endl;
+
 	// initialize glfw
 	glfwInit();
 
@@ -107,7 +109,7 @@ int main() {
 	glBindVertexArray(default_VAO);
 
 	// compile and utilize the shader program
-	ShaderProgramSource source = parseShader("res/shaders/Shader.shader");
+	ShaderProgramSource source = parseShader("../res/shaders/Shader.shader");
 	unsigned int shader = createShader(source.vertexSource, source.fragmentSource);
 	glUseProgram(shader);
 
