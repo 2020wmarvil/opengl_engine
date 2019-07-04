@@ -109,7 +109,7 @@ int main() {
 	glBindVertexArray(default_VAO);
 
 	// compile and utilize the shader program
-	ShaderProgramSource source = parseShader("../res/shaders/Shader.shader");
+	ShaderProgramSource source = parseShader("res/shaders/Shader.shader");
 	unsigned int shader = createShader(source.vertexSource, source.fragmentSource);
 	glUseProgram(shader);
 
