@@ -8,9 +8,7 @@
 #include <sstream>
 #include <vector>
 
-#include "VertexBuffer.h"
-#include "IndexBuffer.h"
-#include "VertexArray.h"
+#include "../src/test.cpp"
 
 // constants
 #define WIDTH 800
@@ -23,7 +21,7 @@ struct ShaderProgramSource {
 };
 
 // helper functions
-static void genArrays(const float vertices[], const unsigned int indices[], VertexArray* va);
+static void genArrays(const float vertices[], const unsigned int indices[], unsigned int *VAO);
 
 // shader functions
 static unsigned int createShader(const std::string& vertexShader, const std::string& fragmentShader);
@@ -31,12 +29,18 @@ static unsigned int compileShader(unsigned int type, const std::string& source);
 static ShaderProgramSource parseShader(const std::string& filepath);
 
 // input fuctions
-void processInput(GLFWwindow *window, const std::vector<VertexArray*>& vertex_arrays);
+void processInput(GLFWwindow *window);
 
 // callback functions
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 
+// some useful variables
+static unsigned int default_VAO, alternate_VAO;
+
 int main() {
+	// testing the build system, should just print "100" to the console
+	std::cout << test() << std::endl;
+
 	// initialize glfw
 	glfwInit();
 
@@ -97,13 +101,12 @@ int main() {
 		0.2f, 0.3f, 0.8f, 1.0f
 	};
 
-	VertexArray va1, va2;
-	genArrays(vertices, indices, &va1);
-	genArrays(vertices2, indices2, &va2);
+	// create the vertex array objects
+		// a vertex array object can help us swap between VBOs
+	genArrays(vertices, indices, &default_VAO);
+	genArrays(vertices2, indices2, &alternate_VAO);
 
-	std::vector<VertexArray*> vertex_arrays { &va1, &va2 };
-
-	va1.Bind();
+	glBindVertexArray(default_VAO);
 
 	// compile and utilize the shader program
 	ShaderProgramSource source = parseShader("res/shaders/Shader.shader");
@@ -128,7 +131,7 @@ int main() {
 		} color[0] += color_increment;
 
 		// input
-		processInput(window, vertex_arrays);
+		processInput(window);
 
 		// poll for events and swap buffers
 		glfwPollEvents();
@@ -142,14 +145,26 @@ int main() {
 	return 0;
 }
 
-static void genArrays(const float vertices[], const unsigned int indices[], VertexArray* va) {
-	VertexBuffer vb(vertices, 4 * 3 * sizeof(float));
+static void genArrays(const float vertices[], const unsigned int indices[], unsigned int *VAO) {
+	glGenVertexArrays(1, VAO);
+	glBindVertexArray(*VAO);
 
-	VertexBufferLayout layout;
-	layout.PushFloat(3);
-	va->AddBuffer(vb, layout);
+	// create the "vertex buffer object"
+		// a vertex buffer exists to send batches of vertices to the gpu at once to save time
+	unsigned int VBO;
+	glGenBuffers(1, &VBO);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	glBufferData(GL_ARRAY_BUFFER, 3 * 4 * sizeof(float), vertices, GL_STATIC_DRAW);
 
-	IndexBuffer ib(indices, 2 * 3 * sizeof(unsigned int));
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (const void*)0);
+	glEnableVertexAttribArray(0);
+
+	// create the "index buffer object"
+		// an index buffer exists so that we can specify the vertex combinations that make up triangles
+	unsigned int IBO;
+	glGenBuffers(1, &IBO);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, 3 * 2 * sizeof(unsigned int), indices, GL_STATIC_DRAW);
 
 	glBindVertexArray(0);
 }
@@ -224,19 +239,135 @@ static ShaderProgramSource parseShader(const std::string& filepath) {
 
 	return { ss[0].str(), ss[1].str() };
 }
- 
-void processInput(GLFWwindow *window, const std::vector<VertexArray*>& vertex_arrays) {
+
+void processInput(GLFWwindow *window) {
     if(glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
 	
 	if (glfwGetKey(window, GLFW_KEY_1) && !glfwGetKey(window, GLFW_KEY_2)) {
-		vertex_arrays[0]->Bind();
+		glBindVertexArray(default_VAO);
 	}
 	if (glfwGetKey(window, GLFW_KEY_2) && !glfwGetKey(window, GLFW_KEY_1)) {
-		vertex_arrays[1]->Bind();
+		glBindVertexArray(alternate_VAO);
 	}
 }
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
     glViewport(0, 0, width, height);
 }
+
+
+
+/*
+// imports
+#include <GL/glew.h>
+#include <GLFW/glfw3.h>
+
+#include <iostream>
+#include <vector>
+
+// constants
+#define WIDTH 800
+#define HEIGHT 600
+#define SPEED 0.0001f
+
+// input fuctions
+void processInput(GLFWwindow *window, std::vector<float> &speed);
+void updatePosition(std::vector<std::vector<float>> &points, const std::vector<float> &speed);
+
+// callback functions
+void framebuffer_size_callback(GLFWwindow* window, int width, int height);
+
+int main() {
+	glfwInit();
+
+	// window hints
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+
+	// create the window
+	GLFWwindow* window = glfwCreateWindow(WIDTH, HEIGHT, "LearnOpenGL", NULL, NULL);
+	glfwMakeContextCurrent(window);
+
+	glewInit();
+
+	glViewport(0, 0, WIDTH, HEIGHT);
+
+	// window properties
+	glfwSetWindowTitle(window, "ラストエグザイル");
+	glfwSetWindowAspectRatio(window, WIDTH, HEIGHT);
+//	glfwMaximizeWindow(window);
+
+	// set callbacks
+	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+
+	std::vector<std::vector<float>> points {
+			{-0.5f, -0.5f},
+			{0.0f, 0.5f},
+			{0.5f, -0.5f}
+	};
+
+	std::vector<float> speed { 0.0f, 0.0f };
+
+	// render loop
+	while(!glfwWindowShouldClose(window)) {
+		// clear the buffers
+		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+
+		// render stuff!
+		glBegin(GL_TRIANGLES);	
+			glVertex2f(points[0][0], points[0][1]);
+			glVertex2f(points[1][0], points[1][1]);
+			glVertex2f(points[2][0], points[2][1]);
+		glEnd();
+
+		updatePosition(points, speed);
+
+		// input
+		processInput(window, speed);
+
+		// poll for events and swap buffers
+		glfwPollEvents();
+	 	glfwSwapBuffers(window);
+	}
+
+	glfwTerminate();
+
+	return 0;
+}
+
+void updatePosition(std::vector<std::vector<float>> &points, const std::vector<float> &speed) {
+	points[0][0] += speed[0];
+	points[1][0] += speed[0];
+	points[2][0] += speed[0];
+
+	points[0][1] += speed[1];
+	points[1][1] += speed[1];
+	points[2][1] += speed[1];
+}
+
+void processInput(GLFWwindow *window, std::vector<float> &speed) {
+    if(glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+        glfwSetWindowShouldClose(window, true);
+
+    if(glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS)
+		speed[0] = SPEED;
+    if(glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS)
+		speed[0] = -SPEED;
+    if(glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
+		speed[1] = SPEED;
+    if(glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
+		speed[1] = -SPEED;
+
+    if(glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_RELEASE && glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_RELEASE) {
+		speed[0] = 0.0f;
+	}
+    if(glfwGetKey(window, GLFW_KEY_UP) == GLFW_RELEASE && glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_RELEASE) {
+		speed[1] = 0.0f;
+	}
+}
+
+void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
+    glViewport(0, 0, width, height);
+}
+*/
