@@ -10,6 +10,10 @@ add_library(SRC_CODE STATIC
     Shader.cpp
     Renderer.h
     Renderer.cpp
+    Texture.h
+    Texture.cpp
 )
 
 target_include_directories(SRC_CODE PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+
+add_subdirectory(vendor)

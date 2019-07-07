@@ -14,6 +14,7 @@
 #include "VertexArray.h"
 #include "Shader.h"
 #include "Renderer.h"
+#include "Texture.h"
 
 // constants
 #define WIDTH 800
@@ -45,11 +46,14 @@ int main() {
 	// set callbacks
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
 	float vertices[] = {
-		-0.5f, -0.5f, 0.0f,
-		0.5f, -0.5f, 0.0f,
-		0.5f, 0.5f, 0.0f,
-		-0.5f, 0.5f, 0.0f
+		-0.5f, -0.5f, 0.0f,  0.0f, 0.0f,
+		 0.5f, -0.5f, 0.0f,  1.0f, 0.0f,
+		 0.5f,  0.5f, 0.0f,  1.0f, 1.0f,
+		-0.5f,  0.5f, 0.0f,  0.0f, 1.0f
 	};
 
 	unsigned int indices[] {
@@ -65,18 +69,23 @@ int main() {
 
 	// create our vertex array object
 	VertexArray va;
-	VertexBuffer vb(vertices, 4 * 3 * sizeof(float));
+	VertexBuffer vb(vertices, 4 * 5 * sizeof(float));
 
 	VertexBufferLayout layout;
 	layout.PushFloat(3);
+	layout.PushFloat(2);
 	va.AddBuffer(vb, layout);
 
 	IndexBuffer ib(indices, 2 * 3 * sizeof(unsigned int));
 
-	// create the shader
+	// create the shader and set the uniforms
 	Shader shader("res/shaders/Shader.shader");
-	shader.Bind();
-	shader.SetUniform4f("u_Color", color[0], color[1], color[2], color[3]);
+//	shader.Bind();
+//	shader.SetUniform4f("u_Color", color[0], color[1], color[2], color[3]);
+
+	Texture texture("res/textures/cherno_image.png");
+	texture.Bind();
+	shader.SetUniform1i("u_Texture", 0);
 
 	va.Unbind();
 	vb.Unbind();
@@ -90,10 +99,11 @@ int main() {
 		// clear the buffers
 		renderer.Clear();
 
-		// render stuff!
-		shader.Bind();
-		shader.SetUniform4f("u_Color", color[0], color[1], color[2], color[3]);
+		// update the uniforms
+//		shader.Bind();
+//		shader.SetUniform4f("u_Color", color[0], color[1], color[2], color[3]);
 
+		// render stuff!
 		renderer.Draw(va, ib, shader);
 
 		if (color[0] > 1.0f || color[0] < 0.0f) {

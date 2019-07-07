@@ -5,4 +5,4 @@ find_package(GLEW REQUIRED)
 add_executable(Main main.cpp)
 
 include_directories( ${OPENGL_INCLUDE_DIRS}  ${GLEW_INCLUDE_DIRS} )
-target_link_libraries(Main glfw ${OPENGL_LIBRARIES} ${GLEW_LIBRARY} SRC_CODE )
+target_link_libraries(Main glfw ${OPENGL_LIBRARIES} ${GLEW_LIBRARY} SRC_CODE SDB_IMAGE )
