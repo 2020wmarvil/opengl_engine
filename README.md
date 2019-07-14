@@ -1,6 +1,6 @@
 # opengl_learning
 
-## To generate the makefile:
+### To generate the makefile:
 
 mkdir build
 
@@ -8,10 +8,10 @@ cd build
 
 cmake ..
 
-## To run the makefile: 
+### To run the makefile: 
 
 make
 
-## To run the application: 
+### To run the application: 
 
 ./bin/Main
