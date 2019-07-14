@@ -1,19 +1,12 @@
-add_library(SRC_CODE STATIC 
-    VertexBuffer.h
-    VertexBuffer.cpp
-    IndexBuffer.h
-    IndexBuffer.cpp
-    VertexArray.h
-    VertexArray.cpp
-    VertexBufferLayout.h
-    Shader.h
-    Shader.cpp
-    Renderer.h
-    Renderer.cpp
-    Texture.h
-    Texture.cpp
+add_library(source STATIC 
+    VertexBuffer.cpp    VertexBuffer.h      VertexBufferLayout.h
+    IndexBuffer.cpp     IndexBuffer.h
+    VertexArray.cpp     VertexArray.h
+    Shader.cpp          Shader.h
+    Renderer.cpp        Renderer.h
+    Texture.cpp         Texture.h
 )
 
-target_include_directories(SRC_CODE PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories( source PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} vendor )
 
 add_subdirectory(vendor)
