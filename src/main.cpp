@@ -19,6 +19,10 @@
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp"
 
+#include "imgui/imgui.h"
+#include "imgui/imgui_impl_glfw.h"
+#include "imgui/imgui_impl_opengl3.h"
+
 // constants
 #define WIDTH 800
 #define HEIGHT 600
@@ -65,6 +69,8 @@ int main() {
 		2, 3, 0
 	};
 
+	std::vector<float> speed = { 0.0f, 0.0f };
+
 	// create our vertex array object
 	VertexArray va;
 	VertexBuffer vb(vertices, 4 * 5 * sizeof(float), GL_DYNAMIC_DRAW);
@@ -76,21 +82,26 @@ int main() {
 
 	IndexBuffer ib(indices, 2 * 3 * sizeof(unsigned int));
 
+	// create the MVP matrices
 	glm::mat4 proj = glm::ortho(0.0f, (float)WIDTH, 0.0f, (float)HEIGHT, -1.0f, 1.0f);
 	glm::mat4 view = glm::translate(glm::mat4(1.0f), glm::vec3(-100.0f, 0.0f, 0.0f));
-	glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(200.0f, 200.0f, 0.0f));
+	glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(200.0f, 100.0f, 0.0f));
 
 	glm::mat4 mvp = proj * view * model;
 
 	// create the shader and set the uniforms
 	Shader shader("../res/shaders/Shader.shader");
-
-	Texture texture("../res/textures/rose.jpg");
-
-	texture.Bind();
-	shader.SetUniform1i("u_Texture", 0);
+	shader.Bind();
 	shader.SetUniformMat4f("u_MVP", mvp);
 
+	// create and bind a texture
+	Texture texture("../res/textures/rose.jpg");
+
+	shader.Bind();
+	texture.Bind();
+	shader.SetUniform1i("u_Texture", 0);
+
+	// unbind our objects
 	va.Unbind();
 	vb.Unbind();
 	ib.Unbind();
@@ -98,13 +109,20 @@ int main() {
 
 	Renderer renderer;
 
-	std::vector<float> speed = { 0.0f, 0.0f };
+	// create the imgui context
+	ImGui::CreateContext();
+    ImGui_ImplGlfw_InitForOpenGL(window, true);
+    ImGui_ImplOpenGL3_Init("#version 130");
 
-	// render loop
+    ImGui::StyleColorsDark();
+
+	// game loop
 	while(!glfwWindowShouldClose(window)) {
-		// input
+		// poll for events and input
+		glfwPollEvents();
 		processInput(window, speed);
 
+		// update the world state
 		mvp = glm::translate(mvp, glm::vec3(speed[0], speed[1], 0.0f));
 
 		// clear the buffers
@@ -114,15 +132,34 @@ int main() {
 		shader.Bind();
 		shader.SetUniformMat4f("u_MVP", mvp);
 
-		// render stuff!
-		renderer.Draw(va, ib, shader);
+        // start the imgui frame
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui_ImplGlfw_NewFrame();
+        ImGui::NewFrame();
 
-		// poll for events and swap buffers
-		glfwPollEvents();
+		// create an imgui window
+	    ImGui::Begin("debug");
+	    //ImGui::SliderFloat("float", &f, 0.0f, 1.0f);
+	    ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+	    ImGui::End();
+
+		// render stuff!
+        ImGui::Render();
+		renderer.Draw(va, ib, shader);
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
+		// swap the buffers
 	 	glfwSwapBuffers(window);
 	}
 
-	glfwTerminate();
+	// terminate imgui
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplGlfw_Shutdown();
+    ImGui::DestroyContext();
+
+	// terminate glfw
+    glfwDestroyWindow(window);
+    glfwTerminate();
 
 	return 0;
 }

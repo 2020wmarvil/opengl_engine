@@ -6,5 +6,5 @@ add_executable(Main ../src/main.cpp)
 
 include_directories( ${OPENGL_INCLUDE_DIRS} ${GLEW_INCLUDE_DIRS} )
 target_link_libraries(Main 
-    glfw ${OPENGL_LIBRARIES} ${GLEW_LIBRARY} source stb_image 
+    glfw ${OPENGL_LIBRARIES} ${GLEW_LIBRARY} source stb_image imgui
 )
