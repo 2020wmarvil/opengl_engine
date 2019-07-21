@@ -2,6 +2,14 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
+#include "glm/glm.hpp"
+#include "glm/gtc/matrix_transform.hpp"
+#include "glm/gtc/type_ptr.hpp"
+
+#include "imgui/imgui.h"
+#include "imgui/imgui_impl_glfw.h"
+#include "imgui/imgui_impl_opengl3.h"
+
 // standard library imports
 #include <iostream>
 #include <fstream>
@@ -17,25 +25,31 @@
 #include "Shader.h"
 #include "Renderer.h"
 #include "Texture.h"
-
-#include "glm/glm.hpp"
-#include "glm/gtc/matrix_transform.hpp"
-#include "glm/gtc/type_ptr.hpp"
-
-#include "imgui/imgui.h"
-#include "imgui/imgui_impl_glfw.h"
-#include "imgui/imgui_impl_opengl3.h"
+#include "Camera.h"
 
 // constants
 #define WIDTH 800
 #define HEIGHT 600
-#define PLAYER_SPEED 0.25
 #define TARGET_FPS 60
 
-void processInput(GLFWwindow *window, std::vector<float>& speed);
+void setup();
+void processInput(GLFWwindow *window);
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
+void mouse_callback(GLFWwindow* window, double xpos, double ypos);
+void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
+
+float deltaTime = 0.0f;	
+float lastFrame = 0.0f; 
+
+float lastMouseX = WIDTH / 2.0f;
+float lastMouseY = HEIGHT / 2.0f;
+
+bool firstMouse = true;
+
+Camera camera(glm::vec3(0.0f, 0.0f, 3.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 
 int main() {
+	// glfw setup
 	glfwInit();
 
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
@@ -47,20 +61,24 @@ int main() {
 
 	glfwSwapInterval(1);
 
+	glfwSetWindowTitle(window, "ラストエグザイル");
+	glfwSetWindowAspectRatio(window, WIDTH, HEIGHT);
+	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+
+	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+	glfwSetCursorPosCallback(window, mouse_callback);
+	glfwSetScrollCallback(window, scroll_callback); 
+
+	// opengl setup
 	glewInit();
 
 	glViewport(0, 0, WIDTH, HEIGHT);
-
-	glfwSetWindowTitle(window, "ラストエグザイル");
-	glfwSetWindowAspectRatio(window, WIDTH, HEIGHT);
-
-	// set callbacks
-	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
 	glEnable(GL_DEPTH_TEST);  
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
+	// generate the data we'll render (hard code for now, eventually read in from an asset file)
 	float vertices[] = {
 	//	positions				colors					tex coords
 		-0.5f, -0.5f,  0.5f,	1.0f, 0.0f, 0.0f,		0.0f, 0.0f,		// zero
@@ -114,7 +132,20 @@ int main() {
 		22, 23, 20,
 	};
 
-	// create our vertex array object
+	std::vector<glm::vec3> cubePositions = {
+		glm::vec3( 0.0f,  0.0f,  0.0f), 
+		glm::vec3( 2.0f,  5.0f, -15.0f), 
+		glm::vec3(-1.5f, -2.2f, -2.5f),  
+		glm::vec3(-3.8f, -2.0f, -12.3f),  
+		glm::vec3( 2.4f, -0.4f, -3.5f),  
+		glm::vec3(-1.7f,  3.0f, -7.5f),  
+		glm::vec3( 1.3f, -2.0f, -2.5f),  
+		glm::vec3( 1.5f,  2.0f, -2.5f), 
+		glm::vec3( 1.5f,  0.2f, -1.5f), 
+		glm::vec3(-1.3f,  1.0f, -1.5f)  
+	};	
+
+	// create renderable objects out of our data
 	VertexArray va;
 	VertexBuffer vb(vertices, sizeof(vertices), GL_DYNAMIC_DRAW);
 
@@ -155,45 +186,24 @@ int main() {
 
     ImGui::StyleColorsDark();
 
-	std::vector<glm::vec3> cubePositions = {
-		glm::vec3( 0.0f,  0.0f,  0.0f), 
-		glm::vec3( 2.0f,  5.0f, -15.0f), 
-		glm::vec3(-1.5f, -2.2f, -2.5f),  
-		glm::vec3(-3.8f, -2.0f, -12.3f),  
-		glm::vec3( 2.4f, -0.4f, -3.5f),  
-		glm::vec3(-1.7f,  3.0f, -7.5f),  
-		glm::vec3( 1.3f, -2.0f, -2.5f),  
-		glm::vec3( 1.5f,  2.0f, -2.5f), 
-		glm::vec3( 1.5f,  0.2f, -1.5f), 
-		glm::vec3(-1.3f,  1.0f, -1.5f)  
-	};	
-
-	glm::vec3 camera_pos = glm::vec3(0.0f, 0.0f, -3.0f);
-	float camera_angle = 0.0f;
-
-	std::vector<float> speed = { 0.0f, 0.0f };
-
-	// create the MVP matrices
-	glm::mat4 proj = glm::perspective(glm::radians(45.0f), (float)WIDTH/(float)HEIGHT, 0.1f, 100.0f);
-
 	double lasttime = glfwGetTime();
 
 	// game loop
 	while(!glfwWindowShouldClose(window)) {
-		// input
-		processInput(window, speed);
+		// manage time
+		float currentFrame = glfwGetTime();
+		deltaTime = currentFrame - lastFrame;
+		lastFrame = currentFrame;
 
-		// update the world state
-		cubePositions[0][0] += speed[0];
-		cubePositions[0][1] += speed[1];
+		// input
+		processInput(window);
 
 		// clear the buffers
 		renderer.Clear();
 
-		// update the MVP matrices for each object we are rendering
-		glm::mat4 view = glm::translate(glm::mat4(1.0f), camera_pos);
-		view = glm::rotate(view, glm::radians(camera_angle), glm::vec3(1.0f, 0.0f, 0.0f));
-
+		// update the MVP matrices
+		glm::mat4 proj = glm::perspective(glm::radians(camera.GetFOV()), (float)WIDTH/(float)HEIGHT, 0.1f, 100.0f);
+		glm::mat4 view = camera.GetViewMatrix();
 		for (int i=0; i<cubePositions.size(); i++) {
 			glm::mat4 model = glm::translate(glm::mat4(1.0f), cubePositions[i]);
 			model = glm::rotate(model, glm::radians(20.0f * i), glm::vec3(1.0f, 0.3f, 0.5f));
@@ -215,8 +225,6 @@ int main() {
 
 		// create an imgui window
 	    ImGui::Begin("debug");
-		ImGui::SliderFloat("CameraAngle", &camera_angle, -180.0f, 180.0f);
-	    ImGui::SliderFloat3("camera_pos", glm::value_ptr(camera_pos), -250.0f, 250.0f);
 	    ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
 	    ImGui::End();
 
@@ -246,27 +254,42 @@ int main() {
 	return 0;
 }
  
-void processInput(GLFWwindow *window, std::vector<float>& speed) {
+void processInput(GLFWwindow *window) {
     if(glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
         glfwSetWindowShouldClose(window, true);
 	}
 
-	if(glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS)
-		speed[0] = PLAYER_SPEED;
-    if(glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS)
-		speed[0] = -PLAYER_SPEED;
-    if(glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
-		speed[1] = PLAYER_SPEED;
-    if(glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
-		speed[1] = -PLAYER_SPEED;
-    if(glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_RELEASE && glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_RELEASE) {
-		speed[0] = 0.0f;
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
+		camera.ProcessKeyboard(Camera::FORWARD, deltaTime);
 	}
-    if(glfwGetKey(window, GLFW_KEY_UP) == GLFW_RELEASE && glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_RELEASE) {
-		speed[1] = 0.0f;
+    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
+		camera.ProcessKeyboard(Camera::BACKWARD, deltaTime);
+	}
+    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
+		camera.ProcessKeyboard(Camera::LEFT, deltaTime);
+	}
+    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
+		camera.ProcessKeyboard(Camera::RIGHT, deltaTime);
 	}
 }
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
     glViewport(0, 0, width, height);
+}
+
+void mouse_callback(GLFWwindow* window, double xpos, double ypos) {
+	if(firstMouse) {
+        lastMouseX = xpos;
+        lastMouseY = ypos;
+        firstMouse = false;
+    }
+
+	camera.ProcessMouseMovement(xpos - lastMouseX, lastMouseY - ypos);
+
+	lastMouseX = xpos;
+	lastMouseY = ypos;
+}
+
+void scroll_callback(GLFWwindow* window, double xoffset, double yoffset) {
+	camera.ProcessMouseScroll(yoffset);
 }
