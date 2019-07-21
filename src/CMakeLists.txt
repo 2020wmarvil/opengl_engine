@@ -6,6 +6,7 @@ add_library(source STATIC
     Renderer.cpp        Renderer.h
     Texture.cpp         Texture.h
     Camera.cpp		Camera.h
+    Cube.cpp		Cube.h
 )
 
 target_include_directories( source PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} vendor )

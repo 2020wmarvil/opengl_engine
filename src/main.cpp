@@ -26,6 +26,7 @@
 #include "Renderer.h"
 #include "Texture.h"
 #include "Camera.h"
+#include "Cube.h"
 
 // constants
 #define WIDTH 800
@@ -78,59 +79,8 @@ int main() {
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-	// generate the data we'll render (hard code for now, eventually read in from an asset file)
-	float vertices[] = {
-	//	positions				colors					tex coords
-		-0.5f, -0.5f,  0.5f,	1.0f, 0.0f, 0.0f,		0.0f, 0.0f,		// zero
-		 0.5f, -0.5f,  0.5f,	0.0f, 1.0f, 0.0f,		1.0f, 0.0f,		// one
-		 0.5f,  0.5f,  0.5f,	0.0f, 0.0f, 1.0f,		1.0f, 1.0f,		// two
-		-0.5f,  0.5f,  0.5f,	1.0f, 1.0f, 1.0f,		0.0f, 1.0f,		// three
-
-		-0.5f, -0.5f, -0.5f,	0.0f, 1.0f, 0.0f,		1.0f, 0.0f,		// four
-		 0.5f, -0.5f, -0.5f,	1.0f, 0.0f, 0.0f,		0.0f, 0.0f,		// five
-		 0.5f,  0.5f, -0.5f,	1.0f, 1.0f, 1.0f,		0.0f, 1.0f,		// six
-		-0.5f,  0.5f, -0.5f,	0.0f, 0.0f, 1.0f,		1.0f, 1.0f,		// seven
-
-		 0.5f, -0.5f,  0.5f,	1.0f, 0.0f, 0.0f,		0.0f, 0.0f,		// eight
-		 0.5f, -0.5f, -0.5f,	0.0f, 1.0f, 0.0f,		1.0f, 0.0f,		// nine
-		 0.5f,  0.5f, -0.5f,	0.0f, 0.0f, 1.0f,		1.0f, 1.0f,		// ten
-		 0.5f,  0.5f,  0.5f,	1.0f, 1.0f, 1.0f,		0.0f, 1.0f,		// eleven
-
-		-0.5f, -0.5f,  0.5f,	0.0f, 1.0f, 0.0f,		1.0f, 0.0f,		// twelve
-		-0.5f, -0.5f, -0.5f,	1.0f, 0.0f, 0.0f,		0.0f, 0.0f,		// thirteen
-		-0.5f,  0.5f, -0.5f,	1.0f, 1.0f, 1.0f,		0.0f, 1.0f,		// fourteen
-		-0.5f,  0.5f,  0.5f,	0.0f, 0.0f, 1.0f,		1.0f, 1.0f,		// fifteen
-
-		-0.5f, -0.5f,  0.5f,	0.0f, 1.0f, 0.0f,		1.0f, 0.0f,		// sixteen
-		 0.5f, -0.5f,  0.5f,	1.0f, 0.0f, 0.0f,		0.0f, 0.0f,		// seventeen
-		 0.5f, -0.5f, -0.5f,	1.0f, 1.0f, 1.0f,		0.0f, 1.0f,		// eighteen
-		-0.5f, -0.5f, -0.5f,	0.0f, 0.0f, 1.0f,		1.0f, 1.0f,		// nineteen
-
-		-0.5f,  0.5f,  0.5f,	0.0f, 1.0f, 0.0f,		1.0f, 0.0f,		// twenty
-		 0.5f,  0.5f,  0.5f,	0.0f, 0.0f, 1.0f,		1.0f, 1.0f,		// twenty_one
-		 0.5f,  0.5f, -0.5f,	1.0f, 1.0f, 1.0f,		0.0f, 1.0f,		// twenty_two
-		-0.5f,  0.5f, -0.5f,	1.0f, 0.0f, 0.0f,		0.0f, 0.0f,		// twenty_three
-	};
-
-	unsigned int indices[] {
-		0, 1, 2,
-		2, 3, 0,
-		
-		4, 5, 6,
-		6, 7, 4,
-
-		8, 9, 10,
-		10, 11, 8,
-
-		12, 13, 14,
-		14, 15, 12,
-
-		16, 17, 18,
-		18, 19, 16,
-
-		20, 21, 22,
-		22, 23, 20,
-	};
+	// create our testing cubes
+	Cube cube;
 
 	std::vector<glm::vec3> cubePositions = {
 		glm::vec3( 0.0f,  0.0f,  0.0f), 
@@ -144,18 +94,6 @@ int main() {
 		glm::vec3( 1.5f,  0.2f, -1.5f), 
 		glm::vec3(-1.3f,  1.0f, -1.5f)  
 	};	
-
-	// create renderable objects out of our data
-	VertexArray va;
-	VertexBuffer vb(vertices, sizeof(vertices), GL_DYNAMIC_DRAW);
-
-	VertexBufferLayout layout;
-	layout.PushFloat(3);
-	layout.PushFloat(3);
-	layout.PushFloat(2);
-	va.AddBuffer(vb, layout);
-
-	IndexBuffer ib(indices, sizeof(indices), GL_DYNAMIC_DRAW);
 
 	// create the shader and set the uniforms
 	Shader shader("../res/shaders/Shader.shader");
@@ -172,9 +110,7 @@ int main() {
 	shader.SetUniform1i("u_Texture2", 1);
 
 	// unbind our objects
-	va.Unbind();
-	vb.Unbind();
-	ib.Unbind();
+	cube.Unbind();
 	shader.Unbind();
 
 	Renderer renderer;
@@ -215,7 +151,7 @@ int main() {
 			shader.SetUniformMat4f("u_MVP", mvp);
 
 			// render!
-			renderer.Draw(va, ib, shader);
+			renderer.Draw(cube.m_VAO, cube.m_IBO, shader);
 		}
 
         // start the imgui frame
