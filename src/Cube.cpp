@@ -1,37 +1,36 @@
 #include "Cube.h"
-#include <iostream>
 
 float vertices[] = {
-//	positions				colors				tex coords
-	-0.5f, -0.5f,  0.5f,	1.0f, 0.0f, 0.0f,	0.0f, 0.0f,		// zero
-	 0.5f, -0.5f,  0.5f,	0.0f, 1.0f, 0.0f,	1.0f, 0.0f,		// one
-	 0.5f,  0.5f,  0.5f,	0.0f, 0.0f, 1.0f,	1.0f, 1.0f,		// two
-	-0.5f,  0.5f,  0.5f,	1.0f, 1.0f, 1.0f,	0.0f, 1.0f,		// three
+//	positions				normals					colors				tex coords
+	-0.5f, -0.5f,  0.5f,	 0.0f,  0.0f,  1.0f,	1.0f, 0.0f, 0.0f,	0.0f, 0.0f,		// zero
+	 0.5f, -0.5f,  0.5f,	 0.0f,  0.0f,  1.0f,	0.0f, 1.0f, 0.0f,	1.0f, 0.0f,		// one
+	 0.5f,  0.5f,  0.5f,	 0.0f,  0.0f,  1.0f,	0.0f, 0.0f, 1.0f,	1.0f, 1.0f,		// two
+	-0.5f,  0.5f,  0.5f,	 0.0f,  0.0f,  1.0f,	1.0f, 1.0f, 1.0f,	0.0f, 1.0f,		// three
 
-	-0.5f, -0.5f, -0.5f,	0.0f, 1.0f, 0.0f,	1.0f, 0.0f,		// four
-	 0.5f, -0.5f, -0.5f,	1.0f, 0.0f, 0.0f,	0.0f, 0.0f,		// five
-	 0.5f,  0.5f, -0.5f,	1.0f, 1.0f, 1.0f,	0.0f, 1.0f,		// six
-	-0.5f,  0.5f, -0.5f,	0.0f, 0.0f, 1.0f,	1.0f, 1.0f,		// seven
+	-0.5f, -0.5f, -0.5f,	 0.0f,  0.0f, -1.0f,	0.0f, 1.0f, 0.0f,	1.0f, 0.0f,		// four
+	 0.5f, -0.5f, -0.5f,	 0.0f,  0.0f, -1.0f,	1.0f, 0.0f, 0.0f,	0.0f, 0.0f,		// five
+	 0.5f,  0.5f, -0.5f,	 0.0f,  0.0f, -1.0f,	1.0f, 1.0f, 1.0f,	0.0f, 1.0f,		// six
+	-0.5f,  0.5f, -0.5f,	 0.0f,  0.0f, -1.0f,	0.0f, 0.0f, 1.0f,	1.0f, 1.0f,		// seven
 
-	 0.5f, -0.5f,  0.5f,	1.0f, 0.0f, 0.0f,	0.0f, 0.0f,		// eight
-	 0.5f, -0.5f, -0.5f,	0.0f, 1.0f, 0.0f,	1.0f, 0.0f,		// nine
-	 0.5f,  0.5f, -0.5f,	0.0f, 0.0f, 1.0f,	1.0f, 1.0f,		// ten
-	 0.5f,  0.5f,  0.5f,	1.0f, 1.0f, 1.0f,	0.0f, 1.0f,		// eleven
+	 0.5f, -0.5f,  0.5f,	 1.0f,  0.0f,  0.0f,	1.0f, 0.0f, 0.0f,	0.0f, 0.0f,		// eight
+	 0.5f, -0.5f, -0.5f,	 1.0f,  0.0f,  0.0f,	0.0f, 1.0f, 0.0f,	1.0f, 0.0f,		// nine
+	 0.5f,  0.5f, -0.5f,	 1.0f,  0.0f,  0.0f,	0.0f, 0.0f, 1.0f,	1.0f, 1.0f,		// ten
+	 0.5f,  0.5f,  0.5f,	 1.0f,  0.0f,  0.0f,	1.0f, 1.0f, 1.0f,	0.0f, 1.0f,		// eleven
 
-	-0.5f, -0.5f,  0.5f,	0.0f, 1.0f, 0.0f,	1.0f, 0.0f,		// twelve
-	-0.5f, -0.5f, -0.5f,	1.0f, 0.0f, 0.0f,	0.0f, 0.0f,		// thirteen
-	-0.5f,  0.5f, -0.5f,	1.0f, 1.0f, 1.0f,	0.0f, 1.0f,		// fourteen
-	-0.5f,  0.5f,  0.5f,	0.0f, 0.0f, 1.0f,	1.0f, 1.0f,		// fifteen
+	-0.5f, -0.5f,  0.5f,	-1.0f,  0.0f,  0.0f,	0.0f, 1.0f, 0.0f,	1.0f, 0.0f,		// twelve
+	-0.5f, -0.5f, -0.5f,	-1.0f,  0.0f,  0.0f,	1.0f, 0.0f, 0.0f,	0.0f, 0.0f,		// thirteen
+	-0.5f,  0.5f, -0.5f,	-1.0f,  0.0f,  0.0f,	1.0f, 1.0f, 1.0f,	0.0f, 1.0f,		// fourteen
+	-0.5f,  0.5f,  0.5f,	-1.0f,  0.0f,  0.0f,	0.0f, 0.0f, 1.0f,	1.0f, 1.0f,		// fifteen
 
-	-0.5f, -0.5f,  0.5f,	0.0f, 1.0f, 0.0f,	1.0f, 0.0f,		// sixteen
-	 0.5f, -0.5f,  0.5f,	1.0f, 0.0f, 0.0f,	0.0f, 0.0f,		// seventeen
-	 0.5f, -0.5f, -0.5f,	1.0f, 1.0f, 1.0f,	0.0f, 1.0f,		// eighteen
-	-0.5f, -0.5f, -0.5f,	0.0f, 0.0f, 1.0f,	1.0f, 1.0f,		// nineteen
+	-0.5f, -0.5f,  0.5f,	 0.0f, -1.0f,  0.0f,	0.0f, 1.0f, 0.0f,	1.0f, 0.0f,		// sixteen
+	 0.5f, -0.5f,  0.5f,	 0.0f, -1.0f,  0.0f,	1.0f, 0.0f, 0.0f,	0.0f, 0.0f,		// seventeen
+	 0.5f, -0.5f, -0.5f,	 0.0f, -1.0f,  0.0f,	1.0f, 1.0f, 1.0f,	0.0f, 1.0f,		// eighteen
+	-0.5f, -0.5f, -0.5f,	 0.0f, -1.0f,  0.0f,	0.0f, 0.0f, 1.0f,	1.0f, 1.0f,		// nineteen
 
-	-0.5f,  0.5f,  0.5f,	0.0f, 1.0f, 0.0f,	1.0f, 0.0f,		// twenty
-	 0.5f,  0.5f,  0.5f,	0.0f, 0.0f, 1.0f,	1.0f, 1.0f,		// twenty_one
-	 0.5f,  0.5f, -0.5f,	1.0f, 1.0f, 1.0f,	0.0f, 1.0f,		// twenty_two
-	-0.5f,  0.5f, -0.5f,	1.0f, 0.0f, 0.0f,	0.0f, 0.0f,		// twenty_three
+	-0.5f,  0.5f,  0.5f,	 0.0f,  1.0f,  0.0f,	0.0f, 1.0f, 0.0f,	1.0f, 0.0f,		// twenty
+	 0.5f,  0.5f,  0.5f,	 0.0f,  1.0f,  0.0f,	0.0f, 0.0f, 1.0f,	1.0f, 1.0f,		// twenty_one
+	 0.5f,  0.5f, -0.5f,	 0.0f,  1.0f,  0.0f,	1.0f, 1.0f, 1.0f,	0.0f, 1.0f,		// twenty_two
+	-0.5f,  0.5f, -0.5f,	 0.0f,  1.0f,  0.0f,	1.0f, 0.0f, 0.0f,	0.0f, 0.0f,		// twenty_three
 };
 
 unsigned int indices[] {
@@ -60,8 +59,11 @@ Cube::Cube()
 	VertexBufferLayout layout;
 	layout.PushFloat(3);
 	layout.PushFloat(3);
+	layout.PushFloat(3);
 	layout.PushFloat(2);
 	m_VAO.AddBuffer(m_VBO, layout);
+
+	Cube::m_Color = glm::vec3(1.0f, 0.5f, 0.31f);
 }
 
 Cube::~Cube() {

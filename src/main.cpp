@@ -29,11 +29,10 @@
 #include "Cube.h"
 
 // constants
-#define WIDTH 800
-#define HEIGHT 600
+#define WIDTH 1920
+#define HEIGHT 1080
 #define TARGET_FPS 60
 
-void setup();
 void processInput(GLFWwindow *window);
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
@@ -47,7 +46,7 @@ float lastMouseY = HEIGHT / 2.0f;
 
 bool firstMouse = true;
 
-Camera camera(glm::vec3(0.0f, 0.0f, 3.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+Camera camera(glm::vec3(0.0f, 0.0f, 3.0f), glm::vec3(0.0f, 1.0f, 0.0f), CAMERA_DEFAULT_YAW, CAMERA_DEFAULT_PITCH, CAMERA_DEFAULT_FOV, true);
 
 int main() {
 	// glfw setup
@@ -95,23 +94,46 @@ int main() {
 		glm::vec3(-1.3f,  1.0f, -1.5f)  
 	};	
 
-	// create the shader and set the uniforms
-	Shader shader("../res/shaders/Shader.shader");
-	shader.Bind();
+	float lampVertices[] = {
+		-0.5f, -0.5f,  0.5f,  0.5f, -0.5f,  0.5f,  0.5f,  0.5f,  0.5f, -0.5f,  0.5f,  0.5f,
+		-0.5f, -0.5f, -0.5f,  0.5f, -0.5f, -0.5f,  0.5f,  0.5f, -0.5f, -0.5f,  0.5f, -0.5f,
+		 0.5f, -0.5f,  0.5f,  0.5f, -0.5f, -0.5f,  0.5f,  0.5f, -0.5f,  0.5f,  0.5f,  0.5f,
+		-0.5f, -0.5f,  0.5f, -0.5f, -0.5f, -0.5f, -0.5f,  0.5f, -0.5f, -0.5f,  0.5f,  0.5f,
+		-0.5f, -0.5f,  0.5f,  0.5f, -0.5f,  0.5f,  0.5f, -0.5f, -0.5f, -0.5f, -0.5f, -0.5f,
+		-0.5f,  0.5f,  0.5f,  0.5f,  0.5f,  0.5f,  0.5f,  0.5f, -0.5f, -0.5f,  0.5f, -0.5f,
+	}; unsigned int lampIndices[] { 0, 1, 2, 2, 3, 0, 4, 5, 6, 6, 7, 4, 8, 9, 10, 10, 11, 8, 12, 13, 14, 14, 15, 12, 16, 17, 18, 18, 19, 16, 20, 21, 22, 22, 23, 20, };
+	glm::vec3 lampPosition = glm::vec3(1.2f, 1.0f, 2.0f);
+
+	// create a lamp object
+	VertexArray lampVAO;
+	VertexBuffer lampVBO(lampVertices, sizeof(lampVertices), GL_DYNAMIC_DRAW);
+	VertexBufferLayout layout;
+	layout.PushFloat(3);
+	lampVAO.AddBuffer(lampVBO, layout);
+	IndexBuffer lampIBO(lampIndices, sizeof(lampIndices), GL_DYNAMIC_DRAW);
+
+	// create the lighting shader and set its uniforms
+	Shader lightingShader("../res/shaders/PhongShader.glsl");
+	lightingShader.Bind();
+	lightingShader.SetUniformVec3f("u_ObjectColor", cube.GetColor());
+	lightingShader.Unbind();
+
+	// create the lighting shader and set its uniforms
+	Shader lampShader("../res/shaders/LampShader.glsl");
+	lampShader.Bind();
+	lampShader.SetUniformVec3f("u_LampColor", glm::vec3(1.0f, 1.0f, 1.0f));
+	lampShader.Unbind();
 
 	// create and bind a texture
 	Texture tex1("../res/textures/rose.jpg");
 	Texture tex2("../res/textures/awesomeface.png");
 
-	shader.Bind();
+	lightingShader.Bind();
 	tex1.Bind(0);
-	shader.SetUniform1i("u_Texture1", 0);
+	lightingShader.SetUniform1i("u_Texture1", 0);
 	tex2.Bind(1);
-	shader.SetUniform1i("u_Texture2", 1);
-
-	// unbind our objects
-	cube.Unbind();
-	shader.Unbind();
+	lightingShader.SetUniform1i("u_Texture2", 1);
+	lightingShader.Unbind();
 
 	Renderer renderer;
 
@@ -121,6 +143,8 @@ int main() {
     ImGui_ImplOpenGL3_Init("#version 130");
 
     ImGui::StyleColorsDark();
+
+	std::cout << "Error code: " << glGetError() << std::endl;
 
 	double lasttime = glfwGetTime();
 
@@ -140,18 +164,54 @@ int main() {
 		// update the MVP matrices
 		glm::mat4 proj = glm::perspective(glm::radians(camera.GetFOV()), (float)WIDTH/(float)HEIGHT, 0.1f, 100.0f);
 		glm::mat4 view = camera.GetViewMatrix();
-		for (int i=0; i<cubePositions.size(); i++) {
-			glm::mat4 model = glm::translate(glm::mat4(1.0f), cubePositions[i]);
-			model = glm::rotate(model, glm::radians(20.0f * i), glm::vec3(1.0f, 0.3f, 0.5f));
+		glm::mat4 vp = proj * view;
 
-			glm::mat4 mvp = proj * view * model;
+		// lampPosition = camera.GetPosition();
+
+		{
+			glm::mat4 model = glm::mat4(1.0f);
+			model = glm::translate(model, lampPosition);
+			model = glm::scale(model, glm::vec3(0.2f));
+
+			glm::mat4 mvp = vp * model;
 
 			// set the uniforms
-			shader.Bind();
-			shader.SetUniformMat4f("u_MVP", mvp);
+			lampShader.Bind();
+			lampShader.SetUniformMat4f("u_MVP", mvp);
 
 			// render!
-			renderer.Draw(cube.m_VAO, cube.m_IBO, shader);
+			renderer.Draw(lampVAO, lampIBO, lampShader);
+		}
+
+		for (int i=0; i<cubePositions.size(); i++) {
+			glm::mat4 model = glm::mat4(1.0f);
+			model = glm::translate(model, cubePositions[i]);
+			model = glm::rotate(model, glm::radians(20.0f * i), glm::vec3(1.0f, 0.3f, 0.5f));
+
+			glm::mat4 mv = view * model;
+			glm::mat4 mvp = vp * model;
+
+			// set the uniforms
+			lightingShader.Bind();
+			lightingShader.SetUniformMat4f("u_Model", model);
+			lightingShader.SetUniformMat4f("u_View", view);
+			lightingShader.SetUniformMat4f("u_Proj", proj);
+			lightingShader.SetUniformMat4f("u_ModelView", mv);
+			lightingShader.SetUniformMat4f("u_ViewProj", vp);
+			lightingShader.SetUniformMat4f("u_MVP", mvp);
+
+			lightingShader.SetUniformVec3f("material.ambient",  glm::vec3(1.0f, 0.5f, 0.31f));
+			lightingShader.SetUniformVec3f("material.diffuse",  glm::vec3(1.0f, 0.5f, 0.31f));
+			lightingShader.SetUniformVec3f("material.specular", glm::vec3(0.5f, 0.5f,  0.5f));
+			lightingShader.SetUniform1f("material.shininess", 32.0f);
+
+			lightingShader.SetUniformVec3f("light.ambient",  glm::vec3(0.2f, 0.2f, 0.2f));
+			lightingShader.SetUniformVec3f("light.diffuse",  glm::vec3(0.5f, 0.5f, 0.5f));
+			lightingShader.SetUniformVec3f("light.specular", glm::vec3(1.0f, 1.0f, 1.0f));
+			lightingShader.SetUniformVec3f("light.position", lampPosition);
+
+			// render!
+			renderer.Draw(cube.m_VAO, cube.m_IBO, lightingShader);
 		}
 
         // start the imgui frame
@@ -193,6 +253,13 @@ int main() {
 void processInput(GLFWwindow *window) {
     if(glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
         glfwSetWindowShouldClose(window, true);
+	}
+
+    if(glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
+		glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+	}
+    if(glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_RELEASE) {
+		glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 	}
 
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {

@@ -1,16 +1,19 @@
 #pragma once
 
+#include "glm/gtc/matrix_transform.hpp"
+
 #include "VertexArray.h"
 #include "VertexBuffer.h"
 #include "VertexBufferLayout.h"
 #include "IndexBuffer.h"
 
 class Cube {
-private:
 public:
-    VertexArray m_VAO;      // i want these to be private
+    VertexArray m_VAO;
     VertexBuffer m_VBO;
     IndexBuffer m_IBO;
+
+    glm::vec3 m_Color;
 
     Cube();
     ~Cube();
@@ -18,6 +21,6 @@ public:
     void Bind() const;
     void Unbind() const;
 
-    inline VertexArray GetVAO() const { return m_VAO; }         // i want these to work
-    inline IndexBuffer GetIBO() const { return m_IBO; }
+    inline glm::vec3 GetColor() const { return m_Color; }
+    //inline void SetColor(glm::vec3 color) const { m_Color = color; }
 };

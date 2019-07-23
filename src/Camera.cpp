@@ -3,7 +3,7 @@
 Camera::Camera(glm::vec3 position, glm::vec3 up, float yaw, float pitch, float fov, bool flightEnabled)
     : m_Position(position), m_Up(up), m_WorldUp(up), 
     m_Yaw(yaw), m_Pitch(pitch), m_FOV(fov), 
-    m_MovementSpeed(DEFAULT_MOVEMENT_SPEED), m_MouseSensitivity(DEFAULT_MOUSE_SENSITIVITY), 
+    m_MovementSpeed(CAMERA_DEFAULT_MOVEMENT_SPEED), m_MouseSensitivity(CAMERA_DEFAULT_MOUSE_SENSITIVITY), 
     m_FlightEnabled(flightEnabled)
 {
     UpdateCameraVectors();
