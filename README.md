@@ -1,5 +1,18 @@
-# opengl_learning
+# opengl_engine
 
-Practice building a game in OpenGL following a variety of tutorials such as:
-  * [TheChernoProject](https://www.youtube.com/playlist?list=PLlrATfBNZ98foTJPJ_Ev03o2oq3-GGOS2)
-  * [learnopengl.com](https://learnopengl.com/)
+A small 3D rendering engine built with OpenGL. 
+
+
+
+```
+$ mkdir build && cd build
+$ cmake ..
+$ make
+$ ./bin/Main
+```
+
+![alt text](https://i.imgur.com/etYb4S2.gif)
+
+![alt text](https://i.imgur.com/Yyk2wFl.png )
+![alt text](https://i.imgur.com/hPdhuIX.png)
+![alt text](https://i.imgur.com/xFqAvDN.png)
